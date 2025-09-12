@@ -1,0 +1,48 @@
+.TH KISSPORTS 5 "September 12, 2025" "__PROJECT_VER__" "__PROJECT_TITLE__"
+.SH NAME
+.B kissports
+\- KISS TNC port configuration file
+.SH DESCRIPTION
+The \fI/etc/ax25/kissports\fR file defines serial ports for KISS TNCs used with
+AX.25 networking. Each non-comment line specifies a TNC port and its parameters.
+.SH FORMAT
+Each line contains the following fields:
+.TP
+.B name
+Logical name of the port.
+.TP
+.B serial_line
+Device file for the TNC (e.g. \fI/dev/ttyS0\fR).
+.TP
+.B air_baud
+Bit rate of the TNC on the air. The special value \fIaprs\fR can be used to
+set defaults more appropriate for APRS channels. The serial line baud rate is
+defined in \fI/etc/ax25/axports\fR.
+.TP
+.B full_duplex
+Indicates if the channels operated in full duplex. Acceptable values are
+\fIy\fR or \fIn\fR.
+.TP
+.B crc_type
+CRC type: \fI0\fR=Auto, \fI1\fR=None, \fI2\fR=Flexnet, \fI3\fR=Smack. More
+details in the \fIkissparms\fR manpage.
+.TP
+.B txdelay
+Time to hold PTT prior sending packets. Units are in steps of 10ms.
+.TP
+.B txtail
+Time to hold PTT after the last bit has been sent. Units are in steps of 10ms.
+.TP
+.B ip_addr
+Optional IP address assigned to the AX.25 interface. The \fIunderscore 
+character\fR can be used as an empty placeholder.
+.TP
+.B tnc_init_cmd
+Optional command to initialize the TNC.
+.SH EXAMPLE
+A sample config line line:
+.nf
+3 /dev/ttyS1 19200 1 n 7 0 _ /usr/local/bin/tnc_init
+.fi
+.SH SEE ALSO
+axup(1), axdown(1), kissattach(1), kissparms(1)

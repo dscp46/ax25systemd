@@ -1,0 +1,46 @@
+.TH AXUP 1 "September 12, 2025" "__PROJECT_VER__" "__PROJECT_TITLE__"
+.SH NAME
+axup \- configure and bring up an AX.25 port
+.SH SYNOPSIS
+.B axup
+<\fIportname\fR>
+.SH DESCRIPTION
+.B axup
+is a shell script to configure an AX.25 port using \fI/etc/ax25/axports\fR
+and \fI/etc/ax25/kissports\fR. It attaches the port to a KISS TNC and 
+optionally assigns an IP address. The script sets TNC and kernel parameters
+such as window size, maximum frames, packet length, and timeouts.
+.SH OPTIONS
+.TP
+\fIportname\fR
+AX.25 port name to configure, as defined in \fI/etc/ax25/axports\fR and
+\fI/etc/ax25/kissports\fR.
+.SH FILES
+.TP
+\fI/etc/ax25/axports\fR
+AX.25 port configuration file.
+.TP
+\fI/etc/ax25/kissports\fR
+KISS TNC configuration file.
+.SH EXIT STATUS
+.TP
+1
+Incorrect number of arguments.
+.TP
+2
+Port not found in \fI/etc/ax25/axports\fR.
+.TP
+3
+Multiple entries for port in \fI/etc/ax25/axports\fR.
+.TP
+4
+Port not found in \fI/etc/ax25/kissports\fR.
+.TP
+5
+Multiple entries for port in \fI/etc/ax25/kissports\fR.
+.TP
+6
+Failed to attach KISS port.
+.SH SEE ALSO
+axdown(1), kissattach(1), kissparms(1), kissports(5)
+

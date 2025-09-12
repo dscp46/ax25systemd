@@ -1,0 +1,36 @@
+.TH AXDOWN 1 "September 12, 2025" "__PROJECT_VER__" "__PROJECT_TITLE__"
+.SH NAME
+axdown \- shut down an AX.25 port
+.SH SYNOPSIS
+.B axdown
+<\fIportname\fR> [\fIkissattach_pid\fR]
+.SH DESCRIPTION
+.B axdown
+detaches an AX.25 port from its KISS TNC and terminates the associated
+\fIkissattach\fR process. Optionally, any TNC exit commands are executed.
+If the \fIkissattach\fR PID is not provided, it is automatically identified
+using the serial line.
+.SH OPTIONS
+.TP
+\fIportname\fR
+AX.25 port name as defined in \fI/etc/ax25/kissports\fR.
+.TP
+\fIkissattach_pid\fR
+Optional PID of the \fIkissattach\fR process to terminate.
+.SH FILES
+.TP
+\fI/etc/ax25/kissports\fR
+KISS TNC configuration file.
+.SH EXIT STATUS
+.TP
+1
+Incorrect number of arguments.
+.TP
+2
+Port not found in \fI/etc/ax25/kissports\fR.
+.TP
+3
+Multiple entries for port in \fI/etc/ax25/kissports\fR.
+.SH SEE ALSO
+axup(1), kissports(5)
+
