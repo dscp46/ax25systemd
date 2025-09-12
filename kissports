@@ -2,7 +2,7 @@
 #
 # The format of this file is:
 #
-# name serial_line air_baud full_duplex crc-type fdx txdelay txtail [ip_addr] [tnc_init_cmd]
+# name serial_line air_baud full_duplex crc-type txdelay txtail [ip_addr] [tnc_init_cmd]
 # The character '_' can be used to pad the ip_addr field
 # CRC types: 0=Auto, 1=None, 2=Flexnet, 3=Smack
 # fdx admits values 'y' or 'n'
