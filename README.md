@@ -5,6 +5,13 @@ Losely based on https://github.com/la5nta/pat/tree/master/share
 https://github.com/F4FXL/ax25systemd/issues/2
 
 ## Instructions
+You can install this package either by running `make install`.
 
-You can install this package either by running `make install`, or you can build a debian binary package by running `make build-deb`.
-Prerequisite package for this is `ax25-tools`.
+A debian binary package can be built by running `make build-deb`.
+
+# Dependencies
+The deb package already cares of dependencies for you.
+
+Prerequisite for this package is `ax25-tools`, `awk`.
+
+To build the package, you'll need `coreutils`, `dpkg`, and `fakeroot` on top of the prerequisites.
