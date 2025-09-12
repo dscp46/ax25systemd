@@ -1,10 +1,18 @@
 # Extract package name and version from DEBIAN/control
+TITLE := $(shell grep '^Description:' DEBIAN/control | sed 's/^Description: //')
 PACKAGE := $(shell awk '/^Package:/ {print $$2}' DEBIAN/control)
 VERSION := $(shell awk '/^Version:/ {print $$2}' DEBIAN/control)
 DEBFILE := $(PACKAGE)_$(VERSION).deb
 
+MAGIC_TITLE := __PROJECT_TITLE__
+MAGIC_VERSION := __PROJECT_VERSION__
+
 # Default root location for install target
 ROOTLOC ?=
+
+# Manpages list
+MANPAGES := $(patsubst ./%,%,$(wildcard doc/*))
+MANDEST := $(ROOTLOC)/usr/share/man
 
 # === Default target ===
 .PHONY: all
@@ -27,6 +35,15 @@ install:
 	install -d $(ROOTLOC)/usr/share/doc/$(PACKAGE)
 	install -m644 DEBIAN/copyright $(ROOTLOC)/usr/share/doc/$(PACKAGE)/copyright
 	gzip -9nc DEBIAN/changelog > $(ROOTLOC)/usr/share/doc/$(PACKAGE)/changelog.gz
+	install -d $(MANDEST)/man1
+	install -d $(MANDEST)/man5
+	@for manpage in $(MANPAGES); do \
+		ext=$${manpage##*\.}; \
+		destdir=$(MANDEST)/man$${ext}; \
+		sed -e 's/$(MAGIC_TITLE)/$(TITLE)/g' \
+		    -e 's/$(MAGIC_VERSION)/$(VERSION)/g' \
+		    $${manpage} | gzip -9nc > $${destdir}/$$(basename $${manpage}).gz; \
+	done
 
 # === Uninstall target ===
 .PHONY: uninstall
@@ -37,6 +54,9 @@ uninstall:
 	rm -f /usr/sbin/axup
 	rm -rf /usr/share/kissinit
 	rm -rf /usr/share/doc/$(PACKAGE)
+	rm -f /usr/share/man/man1/axup.1.gz
+	rm -f /usr/share/man/man1/axdown.1.gz
+	rm -f /usr/share/man/man5/kissports.5.gz
 
 # === Build-deb target ===
 .PHONY: build-deb
