@@ -5,7 +5,7 @@ VERSION := $(shell awk '/^Version:/ {print $$2}' DEBIAN/control)
 DEBFILE := $(PACKAGE)_$(VERSION).deb
 
 MAGIC_TITLE := __PROJECT_TITLE__
-MAGIC_VERSION := __PROJECT_VERSION__
+MAGIC_VERSION := __PROJECT_VER__
 
 # Default root location for install target
 ROOTLOC ?=
