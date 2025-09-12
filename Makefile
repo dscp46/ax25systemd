@@ -24,6 +24,9 @@ install:
 	install -Dm755 axup $(ROOTLOC)/usr/sbin/axup
 	install -d $(ROOTLOC)/usr/share/kissinit
 	install -Dm755 kissinit/* $(ROOTLOC)/usr/share/kissinit/
+	# doc directory with compressed copyright
+	install -d $(ROOTLOC)/usr/share/doc/$(PACKAGE)
+	gzip -c DEBIAN/copyright > $(ROOTLOC)/usr/share/doc/$(PACKAGE)/copyright.gz
 
 # === Uninstall target ===
 .PHONY: uninstall
@@ -33,14 +36,16 @@ uninstall:
 	rm -f /usr/sbin/axdown
 	rm -f /usr/sbin/axup
 	rm -rf /usr/share/kissinit
+	rm -rf /usr/share/doc/$(PACKAGE)
 
 # === Build-deb target ===
 .PHONY: build-deb
 build-deb: clean-build
 	mkdir -p build
-	$(MAKE) ROOTLOC=./build install
+	# Run install under fakeroot so ownership is root:root in package
+	fakeroot $(MAKE) ROOTLOC=./build install
 	cp -r DEBIAN build/
-	dpkg-deb --build build $(DEBFILE)
+	fakeroot dpkg-deb --build build $(DEBFILE)
 
 # === Lint target ===
 .PHONY: lint
@@ -52,3 +57,4 @@ lint: $(DEBFILE)
 clean-build:
 	rm -rf build
 	rm -f $(DEBFILE)
+

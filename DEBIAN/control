@@ -1,13 +1,9 @@
-Source: ax25systemd
+Package: ax25systemd
+Version: 1.0
 Section: hamradio
 Priority: optional
 Maintainer: Celestine Gramaize <celestine+dev@gramaize.eu>
-Build-Depends: debhelper-compat (= 13), bash, make
-Standards-Version: 4.6.2
 Homepage: https://github.com/dscp46/ax25systemd
-Rules-Requires-Root: no
-
-Package: ax25systemd
 Architecture: all
 Depends: bash (>= 5.0), ax25-tools
 Description: AX.25 interface management for Systemd
