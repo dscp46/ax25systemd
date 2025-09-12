@@ -54,9 +54,11 @@ uninstall:
 	rm -f /usr/sbin/axup
 	rm -rf /usr/share/kissinit
 	rm -rf /usr/share/doc/$(PACKAGE)
-	rm -f /usr/share/man/man1/axup.1.gz
-	rm -f /usr/share/man/man1/axdown.1.gz
-	rm -f /usr/share/man/man5/kissports.5.gz
+	@for manpage in $(MANPAGES); do \
+		ext=$${manpage##*\.}; \
+		destdir=$(MANDEST)/man$${ext}; \
+		rm -f $${destdir}/$$(basename $${manpage}).gz; \
+	done
 
 # === Build-deb target ===
 .PHONY: build-deb
