@@ -1,0 +1,14 @@
+# /etc/ax25/kissports
+#
+# The format of this file is:
+#
+# name serial_line air_baud full_duplex crc-type fdx txdelay txtail [ip_addr] [tnc_init_cmd]
+# The character '_' can be used to pad the ip_addr field
+# CRC types: 0=Auto, 1=None, 2=Flexnet, 3=Smack
+# fdx admits values 'y' or 'n'
+# txdelay and txtail are values times 10ms
+#
+
+#1	/dev/ttyS0	1200	0	n	10	0
+#2	/dev/ttyp0	38400	0	y	0	0	44.x.y.z
+#3	/dev/ttyS1	19200	1	n	7	0	_		/usr/local/bin/tnc_init

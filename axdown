@@ -1,7 +1,40 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
-# Clean up on ax25 down
-  /usr/sbin/kissparms -x -p $1
-  set +e
-  kill $2
-  set -e
+if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+  echo "Usage: $0 axport [kissattach_pid]"
+  exit 1
+fi
+
+# Parse kissports file
+KISSPORT_CFG=$(grep -v '^\s*#' /etc/ax25/kissports | grep $1 )
+if [ $? -ne 0 ]; then
+  echo "Port '$1' not found in /etc/ax25/kissports."
+  exit 2;
+fi
+
+if [ $(echo "${KISSPORT_CFG}" | wc -l) -ne 1 ]; then
+  echo "Multiple config lines found for port '$1' in /etc/ax25/kissports."
+  exit 3;
+fi
+
+AXPORT=$1
+SERLINE=$(echo "${KISSPORT_CFG}" | awk '{print $2;}')
+TNC_INIT_CMD=$(echo "${KISSPORT_CFG}" | awk '{$1=$2=$3=$4=$5=$6=$7=$8=""; print $0;}' | sed 's/^\s*//')
+
+# Locate Kissattach PID
+if [ -n "$2" ]; then
+  KA_PID=$2
+else
+  KA_PID=$(ps auxwf | grep kissattach | grep -v grep | grep "${SERLINE}" | awk '{print $2;}')
+fi
+
+# Exit from KISS mode
+if [ -n "${TNC_INIT_CMD}" ]; then 
+  $(which kissparms) -x -p ${SERLINE}
+fi
+
+# Kill kissattach process 
+set +e
+kill ${KA_PID}
+set -e
+

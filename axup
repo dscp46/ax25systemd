@@ -1,52 +1,131 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # This script is written to help configure an axport
 
 set -e
-if [ -z "$1" ] || [ -z "$2" ]
-  then echo "Usage: $0 [tty] [axport]"
+if [ $# -ne 1 ]; then 
+  echo "Usage: $0 [portname]"
   exit 1;
 fi
 
+AXPORT_CFG=$(grep -v '^\s*#' /etc/ax25/axports | grep $1 )
+if [ $? -ne 0 ]; then
+  echo "Port '$1' not found in /etc/ax25/axports."
+  exit 2;
+fi
+
+if [ $(echo ${AXPORT_CFG} | wc -l) -ne 1 ]; then
+  echo "Multiple config lines found for port '$1' in /etc/ax25/axports."
+  exit 3;
+fi
+
+KISSPORT_CFG=$(grep -v '^\s*#' /etc/ax25/kissports | grep $1 )
+if [ $? -ne 0 ]; then
+  echo "Port '$1' not found in /etc/ax25/kissports."
+  exit 4;
+fi
+
+if [ $(echo "${KISSPORT_CFG}" | wc -l) -ne 1 ]; then
+  echo "Multiple config lines found for port '$1' in /etc/ax25/kissports."
+  exit 5;
+fi
+
+# TODO: detect if port is already up
+
+AXPORT=$1
+SERLINE=$(echo "${KISSPORT_CFG}" | awk '{print $2;}')
+ABAUD=$(echo "${KISSPORT_CFG}" | awk '{print $3;}')
+CRCTYPE=$(echo "${KISSPORT_CFG}" | awk '{print $4;}')
+FDX=$(echo "${KISSPORT_CFG}" | awk '{print $5;}')
+TXDELAY=$(echo "${KISSPORT_CFG}" | awk '{print $6;}')
+TXTAIL=$(echo "${KISSPORT_CFG}" | awk '{print $7;}')
+IP=$(echo "${KISSPORT_CFG}" | awk '{print $8;}' | sed 's/_//g')
+TNC_INIT_CMD=$(echo "${KISSPORT_CFG}" | awk '{$1=$2=$3=$4=$5=$6=$7=$8=""; print $0;}' | sed 's/^\s*//')
+
+PACLEN=$(echo "${AXPORT_CFG}" | awk '{print $4;}')
+MAXFRAMES=$(echo "${AXPORT_CFG}" | awk '{print $5;}')
+
 # Init TNC (optional)
-if [ -n "$TNC_INIT_CMD" ]; then
-  eval "$TNC_INIT_CMD"
+if [ -n "${TNC_INIT_CMD}" ]; then
+  eval "${TNC_INIT_CMD}"
 fi
 
+# Recommended Paclen: 255 above, but not including, 1200bps. 128 otherwise
+# Max frames: adjust to not exceed 6.8s of airtime. Divide that by 2 on an APRS channel.
+# Max frames Extended: same thing, but for a connection with 7 bits counters
+# Resptime: At least 1.2x the required air time for a full length frame
+case ${ABAUD} in
+9600)
+	PERSIST=224
+	MAXFRAMES_EX=32
+	MAX_RETR=15
+	SLOTTIME=50
+	RESPTIME=800
+	;;
 
-if [ "$3" -eq "9600" ]; then
-  /usr/sbin/kissattach -l $1 $2
-  /usr/sbin/kissparms -p $2 -t 100 -l 10 -s 0 -r 255 -f n
-  echo 7      > /proc/sys/net/ax25/ax0/standard_window_size  # 2-7 (max frames)
-  echo 255    > /proc/sys/net/ax25/ax0/maximum_packet_length # 1-512 (paclen)
-  echo 3100   > /proc/sys/net/ax25/ax0/t1_timeout            # (Frack /1000 = seconds)
-  echo 800    > /proc/sys/net/ax25/ax0/t2_timeout            # (RESPtime /1000 = seconds)
-  echo 300000 > /proc/sys/net/ax25/ax0/t3_timeout            # (Check /1000 = seconds)
-  echo 100000  > /proc/sys/net/ax25/ax0/idle_timeout         # (/10000(?) = seconds)
-  echo 5      > /proc/sys/net/ax25/ax0/maximum_retry_count   # n
-  echo 2      > /proc/sys/net/ax25/ax0/connect_mode          # 0 = None, 1 = Network, 2 = All
-  echo 10000  > /proc/sys/net/ipv4/neigh/ax0/retrans_time_ms #crank ARP transmit time to 10s
-elif [ "$3" -eq "1200" ]; then
-  /usr/sbin/kissattach -l $1 $2
-  /usr/sbin/kissparms -p $2 -t 250 -l 10 -s 20 -r 80 -f n
-  echo 1      > /proc/sys/net/ax25/ax0/standard_window_size
-  echo 1      > /proc/sys/net/ax25/ax0/extended_window_size
-  echo 255    > /proc/sys/net/ax25/ax0/maximum_packet_length
-  echo 2000   > /proc/sys/net/ax25/ax0/t1_timeout
-  echo 1000   > /proc/sys/net/ax25/ax0/t2_timeout
-  echo 300000 > /proc/sys/net/ax25/ax0/t3_timeout
-  echo 100000   > /proc/sys/net/ax25/ax0/idle_timeout
-  echo 5      > /proc/sys/net/ax25/ax0/maximum_retry_count
-  echo 2      > /proc/sys/net/ax25/ax0/connect_mode
-  echo 10000   > /proc/sys/net/ipv4/neigh/ax0/retrans_time_ms #crank ARP transmit time to 10s
+4800)
+	PERSIST=224
+	MAXFRAMES_EX=16
+	MAX_RETR=15
+	SLOTTIME=50
+	RESPTIME=800
+	;;
+
+1200)
+	PERSIST=224
+	MAXFRAMES_EX=8
+	MAX_RETR=10
+	SLOTTIME=100
+	RESPTIME=1000
+	;;
+300)
+	PERSIST=63
+	MAXFRAMES_EX=${MAXFRAMES}
+	MAX_RETR=10
+	SLOTTIME=450
+	RESPTIME=4000
+	;;
+
+default)
+	PERSIST=63
+	MAXFRAMES_EX=${MAXFRAMES}
+	MAX_RETR=10
+	SLOTTIME=100
+	RESPTIME=1000
+	;;
+esac
+
+FRACK=10000
+ARP_RETX=10000
+IDLE_TIMEOUT=180000
+CHECK=300000
+
+# Attach the kiss iface and get its port name
+KA_OUT=$(mktemp)
+$(which kissattach) -l ${SERLINE} ${AXPORT} ${IP} > ${KA_OUT}
+if [ $? -eq 0 ]; then
+	AX_PORT=$(grep -oP '(?<=device )\S+' ${KA_OUT})
 else
-  echo "Invalid HBAUD $3"
-  return 1;
+	echo "Failed to attach KISS port '${AXPORT}'."
+	exit 6
 fi
+rm -f ${KA_OUT}
 
-if [ -z "$4" ]
+$(which kissparms) -p -t ${SLOTTIME} -l ${TXTAIL} -s ${SLOTTIME} -r ${PERSIST} -c ${CRCTYPE} -f ${FDX} 
+echo ${MAXFRAMES}    > /proc/sys/net/ax25/${AX_PORT}/standard_window_size    # Max frames AX.25 v2.0
+echo ${MAXFRAMES_EX} > /proc/sys/net/ax25/${AX_PORT}/extended_window_size    # Max frames AX.25 v2.2
+echo ${PACLEN}       > /proc/sys/net/ax25/${AX_PORT}/maximum_packet_length   # PACLEN
+echo ${FRACK}        > /proc/sys/net/ax25/${AX_PORT}/t1_timeout              # FRAck in ms
+echo ${RESPTIME}     > /proc/sys/net/ax25/${AX_PORT}/t2_timeout              # RESPtime in ms
+echo ${CHECK}        > /proc/sys/net/ax25/${AX_PORT}/t3_timeout              # Check in ms
+echo ${IDLE_TIMEOUT} > /proc/sys/net/ax25/${AX_PORT}/idle_timeout            # in ms
+echo ${MAX_RETR}     > /proc/sys/net/ax25/${AX_PORT}/maximum_retry_count     # n
+echo 2               > /proc/sys/net/ax25/${AX_PORT}/connect_mode            # 0=None, 1=Network, 2=All
+echo ${ARP_RETX}     > /proc/sys/net/ipv4/neigh/${AX_PORT}/retrans_time_ms   # Adjust ARP transmit time
+
+if [ -z "${IP}" ]
   then exit 0; #user does not require an ip, exit
 fi
 
-/sbin/ip addr add $4 dev ax0 #should find a way to have interface name more dynamic
+$(which ip) addr add ${IP} dev ${AX_PORT} 
 

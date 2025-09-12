@@ -1,0 +1,12 @@
+[Unit]
+Description=AX.25 KISS interface %I
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/sbin/axup %i
+ExecStop=/usr/sbin/axdown %i ${MAINPID}
+
+[Install]
+WantedBy=default.target
+

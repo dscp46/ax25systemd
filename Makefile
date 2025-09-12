@@ -1,36 +1,54 @@
-#makefile for ax25systemd
-.PHONY prerequisites:
-prerequisites:
-	@apt -y install ax25-tools ax25-apps
+# Extract package name and version from DEBIAN/control
+PACKAGE := $(shell awk '/^Package:/ {print $$2}' DEBIAN/control)
+VERSION := $(shell awk '/^Version:/ {print $$2}' DEBIAN/control)
+DEBFILE := $(PACKAGE)_$(VERSION).deb
 
-.PHONY install:
-install: prerequisites
-	@/bin/cp -f "ax25.service" "/lib/systemd/system/"
-	@/bin/cp -f "axup" "/usr/sbin/"
-	@/bin/chmod +x "/usr/sbin/axup"
-	@/bin/cp -f "axdown" "/usr/sbin"
-	@/bin/chmod +x "/usr/sbin/axdown"
-	@/bin/cp "ax25.default" "/etc/default/ax25"
-	@/bin/mkdir -p "/usr/share/kissinit"
-	@/bin/cp "kissinit/nordlink_1k2" "/usr/share/kissinit/"
-	@/bin/chmod +x "/usr/share/kissinit/nordlink_1k2"
-	@/bin/cp "kissinit/ej50u" "/usr/share/kissinit/"
-	@/bin/chmod +x "/usr/share/kissinit/ej50u"
-	@#
-	@systemctl daemon-reload
-	@systemctl enable ax25
-	@echo " "
-	@echo "Installed. Edit /etc/default/ax25 and /etc/ax25/axports if needed. When done editing those files, run \"service ax25 start\" to start the service"
+# Default root location for install target
+ROOTLOC ?=
 
-.PHONY uninstall:
+# === Default target ===
+.PHONY: all
+all:
+	@echo "Available targets:"
+	@echo "  install   - Install files into the system (uses ROOTLOC prefix if set)"
+	@echo "  uninstall - Remove installed files"
+	@echo "  build-deb - Build a .deb package"
+	@echo "  lint      - Run lintian on the built .deb package"
+
+# === Install target ===
+.PHONY: install
+install:
+	install -Dm644 ax25@.service $(ROOTLOC)/usr/lib/systemd/system/ax25@.service
+	install -Dm644 kissports $(ROOTLOC)/etc/ax25/kissports
+	install -Dm755 axdown $(ROOTLOC)/usr/sbin/axdown
+	install -Dm755 axup $(ROOTLOC)/usr/sbin/axup
+	install -d $(ROOTLOC)/usr/share/kissinit
+	install -Dm755 kissinit/* $(ROOTLOC)/usr/share/kissinit/
+
+# === Uninstall target ===
+.PHONY: uninstall
 uninstall:
-	@service ax25 stop
-	@systemctl disable ax25
-	@systemctl daemon-reload
-	@/bin/rm "/lib/systemd/system/ax25.service"
-	@/bin/rm "/usr/sbin/axup"
-	@/bin/rm "/usr/sbin/axdown"
-	@/bin/rm "/etc/default/ax25"
-	@/bin/rm -rf "/usr/share/kissinit/"
-	@echo " "
-	@echo "Uninstalled !"
+	rm -f /usr/lib/systemd/system/ax25@.service
+	rm -f /etc/ax25/kissports
+	rm -f /usr/sbin/axdown
+	rm -f /usr/sbin/axup
+	rm -rf /usr/share/kissinit
+
+# === Build-deb target ===
+.PHONY: build-deb
+build-deb: clean-build
+	mkdir -p build
+	$(MAKE) ROOTLOC=./build install
+	cp -r DEBIAN build/
+	dpkg-deb --build build $(DEBFILE)
+
+# === Lint target ===
+.PHONY: lint
+lint: $(DEBFILE)
+	lintian $(DEBFILE)
+
+# === Clean helper for builds ===
+.PHONY: clean-build
+clean-build:
+	rm -rf build
+	rm -f $(DEBFILE)
