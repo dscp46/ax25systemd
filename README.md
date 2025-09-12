@@ -15,3 +15,4 @@ The deb package already cares of dependencies for you.
 Prerequisite for this package is `ax25-tools`, `awk`.
 
 To build the package, you'll need `coreutils`, `dpkg`, and `fakeroot` on top of the prerequisites.
+Optionally, you'll need `lintian` to check the built package.
