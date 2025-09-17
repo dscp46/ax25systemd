@@ -59,7 +59,7 @@ case ${ABAUD} in
 	PERSIST=224
 	MAXFRAMES_EX=32
 	MAX_RETR=15
-	SLOTTIME=50
+	SLOTTIME=5
 	RESPTIME=800
 	;;
 
@@ -67,7 +67,7 @@ case ${ABAUD} in
 	PERSIST=224
 	MAXFRAMES_EX=16
 	MAX_RETR=15
-	SLOTTIME=50
+	SLOTTIME=5
 	RESPTIME=800
 	;;
 
@@ -75,14 +75,14 @@ case ${ABAUD} in
 	PERSIST=224
 	MAXFRAMES_EX=8
 	MAX_RETR=10
-	SLOTTIME=100
+	SLOTTIME=10
 	RESPTIME=1000
 	;;
 300)
 	PERSIST=63
 	MAXFRAMES_EX=${MAXFRAMES}
 	MAX_RETR=10
-	SLOTTIME=450
+	SLOTTIME=45
 	RESPTIME=4000
 	;;
 
@@ -90,7 +90,6 @@ default)
 	PERSIST=63
 	MAXFRAMES_EX=${MAXFRAMES}
 	MAX_RETR=10
-	SLOTTIME=100
 	RESPTIME=1000
 	;;
 esac
@@ -104,14 +103,15 @@ CHECK=300000
 KA_OUT=$(mktemp)
 $(which kissattach) -l ${SERLINE} ${AXPORT} ${IP} > ${KA_OUT}
 if [ $? -eq 0 ]; then
-	AX_PORT=$(grep -oP '(?<=device )\S+' ${KA_OUT})
+	AX_PORT=$(grep -oP '(?<=device )\S+' "${KA_OUT}" | head -n1)
 else
 	echo "Failed to attach KISS port '${AXPORT}'."
 	exit 6
 fi
 rm -f ${KA_OUT}
 
-$(which kissparms) -p -t ${SLOTTIME} -l ${TXTAIL} -s ${SLOTTIME} -r ${PERSIST} -c ${CRCTYPE} -f ${FDX} 
+$(which kissparms) -p ${AXPORT} -t ${SLOTTIME} -l ${TXTAIL} -s ${SLOTTIME} -r ${PERSIST} -c ${CRCTYPE} -f ${FDX} 
+echo "Brought up interface ${AX_PORT}."
 echo ${MAXFRAMES}    > /proc/sys/net/ax25/${AX_PORT}/standard_window_size    # Max frames AX.25 v2.0
 echo ${MAXFRAMES_EX} > /proc/sys/net/ax25/${AX_PORT}/extended_window_size    # Max frames AX.25 v2.2
 echo ${PACLEN}       > /proc/sys/net/ax25/${AX_PORT}/maximum_packet_length   # PACLEN
@@ -128,4 +128,5 @@ if [ -z "${IP}" ]
 fi
 
 $(which ip) addr add ${IP} dev ${AX_PORT} 
+
 
