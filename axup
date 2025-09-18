@@ -119,7 +119,7 @@ else
 fi
 rm -f ${KA_OUT}
 
-$(which kissparms) -p ${AXPORT} -t ${SLOTTIME} -l ${TXTAIL} -s ${SLOTTIME} -r ${PERSIST} -c ${CRCTYPE} -f ${FDX} 
+$(which kissparms) -p ${AXPORT} -t "${TXDELAY}0" -l "${TXTAIL}0" -s "${SLOTTIME}0" -r ${PERSIST} -c ${CRCTYPE} -f ${FDX} 
 echo "Brought up interface ${AX_PORT}."
 echo ${MAXFRAMES}    > /proc/sys/net/ax25/${AX_PORT}/standard_window_size    # Max frames AX.25 v2.0
 echo ${MAXFRAMES_EX} > /proc/sys/net/ax25/${AX_PORT}/extended_window_size    # Max frames AX.25 v2.2
