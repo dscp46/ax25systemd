@@ -101,7 +101,7 @@ CHECK=300000
 
 # Attach the kiss iface and get its port name
 KA_OUT=$(mktemp)
-$(which kissattach) -l ${SERLINE} ${AXPORT} ${IP} > ${KA_OUT}
+$(which kissattach) -l "$(realpath ${SERLINE})" ${AXPORT} ${IP} > ${KA_OUT}
 if [ $? -eq 0 ]; then
 	AX_PORT=$(grep -oP '(?<=device )\S+' "${KA_OUT}" | head -n1)
 else
