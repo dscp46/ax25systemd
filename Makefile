@@ -30,6 +30,7 @@ install:
 	install -Dm644 kissports $(ROOTLOC)/etc/ax25/kissports
 	install -Dm755 axdown $(ROOTLOC)/usr/sbin/axdown
 	install -Dm755 axup $(ROOTLOC)/usr/sbin/axup
+	install -Dm755 axmd5 $(ROOTLOC)/usr/bin/axmd5
 	install -d $(ROOTLOC)/usr/share/kissinit
 	install -Dm755 kissinit/* $(ROOTLOC)/usr/share/kissinit/
 	install -d $(ROOTLOC)/usr/share/doc/$(PACKAGE)
@@ -52,6 +53,7 @@ uninstall:
 	rm -f /etc/ax25/kissports
 	rm -f /usr/sbin/axdown
 	rm -f /usr/sbin/axup
+	rm -f /usr/bin/axmd5
 	rm -rf /usr/share/kissinit
 	rm -rf /usr/share/doc/$(PACKAGE)
 	@for manpage in $(MANPAGES); do \

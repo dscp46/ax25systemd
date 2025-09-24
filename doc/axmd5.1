@@ -1,0 +1,41 @@
+.TH AXMD5 1 "September 23, 2025" "__PROJECT_VER__" "__PROJECT_TITLE__"
+.SH NAME
+axmd5 \- compute the response to a salted MD5 authentication challenge
+.SH SYNOPSIS
+.B axmd5
+[\fI-g\fR] [\fI-p\fR] [\fIchallenge\fR]
+.SH DESCRIPTION
+.B axmd5
+computes the response to a salted MD5 authentication challenge. This is
+often used when connecting, though AX25 remote shell on a linux machine
+that uses \fIaxspawn\fR. 
+
+This challenge scheme is not using HMAC-MD5, but is way more secure 
+than the \fIbaycom\fR authentication scheme.
+
+As a convenience measure, an existing password for the \fImd5\fR scheme
+in \fI~/.bcpasswd\fR can be used, such that the authentication response can be 
+computed non-interactively, by passing the challenge in arguments.
+This can be used to automate some remote maintenance tasks.
+.SH OPTIONS
+.TP
+\fI-g\fR
+Generate a 32 character strong password, then place it in \fI~/.bcpasswd\fR.
+When a password already exists for the \fImd5\fR scheme in \fI~/.bcpasswd\fR, existing values are replaced without any warning.
+.TP
+\fI-p\fR
+Ignore existing password in \fI~/.bcpasswd\fR, and prompt for a new password. The content of \fI./~bcpasswd\fR is not modified.
+.TP
+\fIchallenge\fR
+Provide the challenge as an argument.
+.SH FILES
+.TP
+\fI~/.bcpasswd\fR
+Over-the-air AX.25 authentication password storage file.
+.SH EXIT STATUS
+.TP
+2
+Incorrect number, or malformed arguments.
+.SH SEE ALSO
+axup(1), kissports(5)
+

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+usage() {
+
+	echo "$0 [-g] [-p] [challenge]" >&2
+	echo " -g: Generate a new password and create or update ~/.bcpasswd" >&2
+	echo " -p: Ignore ~/.bcpasswd and ask for the password to use." >&2
+	exit 2
+}
+
+prompt_password() {
+	read -sp "Password: " password
+	echo ""
+}
+
+ask_password=0
+gen_password=0
+bcpasswd_loc=~/.bcpasswd
+
+while [ $# -ne 0 ]; do
+	case "$1" in
+		-g) gen_password=1; shift ;;
+		-p) ask_password=1; shift ;;
+		--) shift; break ;;
+		-*)  echo "Unknown option: $1" >&2; usage ;;
+		*)
+			if [[ -z "${challenge}" ]]; then
+				challenge="$1"
+			else
+				echo "Unexpected extra argument: $1" >&2
+				usage
+			fi
+			shift
+			;;
+	esac
+done
+
+if [ ${ask_password} -ne 0 ]; then
+	prompt_password
+
+elif [ ${gen_password} -ne 0 ]; then
+	password=$(cat /dev/urandom | tr -dc '(-9<-[]-{' | fold -w 32 | head -n 1)
+	if [ -f "${bcpasswd_loc}" ]; then
+		sed -i '/^md5:/d' "${bcpasswd_loc}"
+	else
+		touch "${bcpasswd_loc}"
+		chmod 600 "${bcpasswd_loc}"
+		echo "md5:${password}" >> "${bcpasswd_loc}"
+	fi
+	exit 0
+
+else
+	if [ -r "${bcpasswd_loc}" ]; then
+		passline=$(grep '^md5:' "${bcpasswd_loc}")
+		retcode=$?
+		n_lines=$(echo "${passline}" | wc -l)
+		if [ ${retcode} -eq 0 ] && [ ${n_lines} -eq 1 ]; then
+			password=$(echo "${passline}" | sed -e 's/^md5://' -e 's/^\s\+//' )
+		else
+			echo "Malformed '${bcpasswd_loc}' file."
+		fi
+	fi
+fi
+
+if [ -z "${password}" ]; then prompt_password; fi
+if [ -z "${challenge}" ]; then read -p "Challenge: " challenge; fi
+
+echo -ne "Response: "
+echo -ne "${challenge}${password}" | md5sum | awk '{print $1;}'

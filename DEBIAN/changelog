@@ -1,3 +1,9 @@
+ax25systemd (1.1-1) unstable; urgency=medium
+
+  * Add AX.25 MD5 authentication response calculator.
+
+ -- Celestine Gramaize <celestine+dev@gramaize.eu>  Wed, 24 Sep 2025 14:00:00 +0200
+
 ax25systemd (1.0-1) unstable; urgency=medium
 
   * Initial release.
